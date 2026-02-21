@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tour Product Catalog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --primary: #1e293b;
+            --accent: #3b82f6;
+            --bg-soft: #f8fafc;
+            --header-h: 88px;
+            --footer-h: 52px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-soft);
+            color: #1e293b;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* ── STICKY HEADER ── */
+        #siteHeader {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(248, 250, 252, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid #e2e8f0;
+            height: var(--header-h);
+        }
+
+        #siteHeader .inner {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+        }
+
+        /* ── BODY LAYOUT ── */
+        #appBody {
+            flex: 1;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem 1.5rem calc(var(--footer-h) + 1.5rem);
+            display: flex;
+            gap: 2rem;
+        }
+
+        /* ── LEFT SIDEBAR ── */
+        #sidebar {
+            width: 210px;
+            flex-shrink: 0;
+        }
+
+        #sidebarInner {
+            position: sticky;
+            top: calc(var(--header-h) + 1.5rem);
+            max-height: calc(100vh - var(--header-h) - var(--footer-h) - 3rem);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+
+        #sidebarInner::-webkit-scrollbar { width: 4px; }
+        #sidebarInner::-webkit-scrollbar-track { background: transparent; }
+        #sidebarInner::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        .cat-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            text-align: left;
+            padding: 0.55rem 0.9rem;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            margin-bottom: 0.35rem;
+            cursor: pointer;
+            background: transparent;
+            color: #64748b;
+            line-height: 1.3;
+        }
+
+        .cat-btn:hover {
+            background: white;
+            color: #3b82f6;
+            border-color: #bfdbfe;
+        }
+
+        .cat-btn.active {
+            background: #1e293b;
+            color: white;
+            border-color: #1e293b;
+            box-shadow: 0 4px 12px rgba(30,41,59,0.2);
+        }
+
+        /* ── MAIN CONTENT ── */
+        #mainContent { flex: 1; min-width: 0; }
+
+        /* ── CARDS ── */
+        .info-card {
+            background: white;
+            border-radius: 24px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .info-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent);
+            box-shadow: 0 25px 30px -10px rgba(59,130,246,0.15);
+        }
+
+        .card-image-container {
+            width: 100%;
+            height: 260px;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .data-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+        }
+
+        /* ── OVERLAYS ── */
+        #detailOverlay, #lightboxOverlay {
+            backdrop-filter: blur(16px);
+            background-color: rgba(15, 23, 42, 0.85);
+        }
+
+        .content-rich ul { list-style-type: disc; margin-left: 1.5rem; }
+        .content-rich li { margin-bottom: 0.5rem; }
+
+        .slider-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 2rem;
+            background: #f1f5f9;
+        }
+        
+        .slider-track {
+            display: flex;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .slide { flex: 0 0 100%; height: 500px; cursor: zoom-in; }
+        .slide img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .slide:hover img { transform: scale(1.03); }
+
+        /* ── STICKY FOOTER ── */
+        #siteFooter {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+            height: var(--footer-h);
+            background: rgba(15, 23, 42, 0.97);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px solid rgba(255,255,255,0.07);
+        }
+
+        #siteFooter p {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        #siteFooter strong { color: #60a5fa; font-weight: 700; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            #sidebar { display: none; }
+        }
+
+        @media print {
+            .no-print { display: none; }
+            body { background: white; }
+            #appBody { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ══════════ STICKY HEADER ══════════ -->
+    <header id="siteHeader" class="no-print">
+        <div class="inner">
+            <div>
+                <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 leading-none">Tour Catalog</h1>
+                <p class="text-slate-400 font-semibold text-[10px] mt-1 tracking-widest uppercase">Rayna B2B</p>
+            </div>
+
+            <div class="flex items-center gap-3 bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-200 flex-1 max-w-sm ml-auto">
+                <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input 
+                    type="text" 
+                    id="searchInput"
+                    placeholder="Search tours..." 
+                    class="bg-transparent text-sm outline-none w-full font-medium text-slate-700 placeholder-slate-400"
+                >
+            </div>
+        </div>
+    </header>
+
+    <!-- ══════════ APP BODY ══════════ -->
+    <div id="appBody">
+
+        <!-- LEFT SIDEBAR -->
+        <aside id="sidebar" class="no-print">
+            <div id="sidebarInner">
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.12em] mb-3 px-1">Categories</p>
+                <div id="categoryFilter">
+                    <button onclick="filterByCategory('all')" class="cat-btn active" data-category="all">
+                        🗺️ All Tours
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN GRID -->
+        <main id="mainContent">
+            <div id="loadingState" class="py-32 text-center">
+                <div class="inline-block w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-6"></div>
+                <p class="text-slate-400 font-bold text-sm tracking-widest uppercase">Initializing Catalog</p>
+            </div>
+
+            <div id="catalogGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"></div>
+
+            <div id="emptyState" class="hidden py-32 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200">
+                <p class="text-slate-500 font-bold text-xl mb-2">No matches found</p>
+                <p class="text-slate-400">Try adjusting your search or category selection.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- ══════════ DETAIL OVERLAY ══════════ -->
+    <div id="detailOverlay" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+        <div class="min-h-screen flex items-center justify-center p-4 md:p-10">
+            <div class="bg-white rounded-[40px] w-full max-w-7xl shadow-2xl relative overflow-hidden border border-slate-200">
+                <button onclick="closeDetail()" class="absolute top-8 right-8 bg-slate-900/60 text-white p-4 rounded-full hover:bg-red-500 transition-all z-[120] backdrop-blur-md">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <div id="detailContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ LIGHTBOX ══════════ -->
+    <div id="lightboxOverlay" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4">
+        <button onclick="closeLightbox()" class="absolute top-8 right-8 text-white p-4 hover:bg-white/10 rounded-full transition-all">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <button onclick="moveLightbox(-1)" class="absolute left-8 text-white p-4 hover:bg-white/10 rounded-full transition-all">
+            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+        <img id="lightboxImage" class="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl transition-opacity duration-300" src="" alt="">
+        <button onclick="moveLightbox(1)" class="absolute right-8 text-white p-4 hover:bg-white/10 rounded-full transition-all">
+            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+        <div class="absolute bottom-8 left-0 right-0 text-center text-white/70 font-bold text-sm" id="lightboxCounter"></div>
+    </div>
+
+    <!-- ══════════ STICKY FOOTER ══════════ -->
+    <footer id="siteFooter">
+        <p>Designed by <strong>SAURAV CHAUHAN</strong></p>
+    </footer>
+
+    <script>
+        const BASE_URL = 'https://sandbox.raynatours.com';
+        const IMAGE_CDN = 'https://d1i3enf1i5tb1f.cloudfront.net';
+        const DETAIL_ENDPOINT = '/api/Tour/tourStaticDataById';
+        const OPTIONS_ENDPOINT = '/api/Tour/touroptionstaticdata';
+        const COUNTRY_ID = 13063;
+        const CITY_ID = 13668;
+
+        let catalogData = [];
+        let currentFilter = 'all';
+        let currentSlideIndex = 0;
+        let activeGalleryImages = [];
+        let currentLightboxIdx = 0;
+
+        window.onload = async () => {
+            await fetchCatalog();
+            setupSearch();
+        };
+
+        const TOUR_CONFIG = {
+            'Theme Parks':   { icon: '🎡', cls: 'bg-orange-100 text-orange-700 border-orange-200' },
+            'Water Parks':   { icon: '🌊', cls: 'bg-blue-100 text-blue-700 border-blue-200' },
+            'Adventure':     { icon: '⛰️', cls: 'bg-red-100 text-red-700 border-red-200' },
+            'Sightseeing':   { icon: '📸', cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+            'Luxury':        { icon: '💎', cls: 'bg-purple-100 text-purple-700 border-purple-200' },
+            'Dhow Cruise':   { icon: '⛵', cls: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+            'Desert Safari': { icon: '🏜️', cls: 'bg-amber-100 text-amber-700 border-amber-200' }
+        };
+
+        function getTourCfg(type) {
+            return TOUR_CONFIG[type] || { icon: '📍', cls: 'bg-slate-100 text-slate-700 border-slate-200' };
+        }
+
+        function formatTourType(type) {
+            const c = getTourCfg(type);
+            return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${c.cls} border">${c.icon} ${type || 'Standard'}</span>`;
+        }
+
+        function getFormattedImageUrl(pathOrObj) {
+            if (!pathOrObj) return 'https://via.placeholder.com/800x600?text=No+Image';
+            let path = typeof pathOrObj === 'string' ? pathOrObj : (pathOrObj.imagePath || pathOrObj.imageUrl || pathOrObj.thumbImage);
+            if (!path) return 'https://via.placeholder.com/800x600?text=No+Image';
+            let url = path.startsWith('http') ? path : `${IMAGE_CDN}/${path.replace(/^\//, '')}`;
+            if (!url.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/i)) url = url.replace(/\/$/, '') + '_L.jpg';
+            return url;
+        }
+
+        async function fetchCatalog() {
+            try {
+                const res = await fetch('/.netlify/functions/rayna', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        endpoint: '/api/Tour/tourstaticdata',
+                        payload: { countryId: COUNTRY_ID, cityId: CITY_ID }
+                    })
+                });
+                const result = await res.json();
+                catalogData = result.data || result.result || [];
+                generateCategoryFilters(catalogData);
+                renderCatalog(catalogData);
+                document.getElementById('loadingState').classList.add('hidden');
+            } catch {
+                document.getElementById('loadingState').innerHTML =
+                    `<p class="text-red-500 font-bold text-center py-20">Failed to load catalog.</p>`;
+            }
+        }
+
+        function generateCategoryFilters(data) {
+            const cats = [...new Set(data.map(i => i.cityTourType).filter(Boolean))];
+            const container = document.getElementById('categoryFilter');
+            cats.forEach(cat => {
+                const c = getTourCfg(cat);
+                const btn = document.createElement('button');
+                btn.className = 'cat-btn';
+                btn.dataset.category = cat;
+                btn.onclick = () => filterByCategory(cat);
+                btn.innerHTML = `${c.icon} ${cat}`;
+                container.appendChild(btn);
+            });
+        }
+
+        function filterByCategory(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.category === cat));
+            renderCatalog(cat === 'all' ? catalogData : catalogData.filter(i => i.cityTourType === cat));
+        }
+
+        function findOptionsArray(obj) {
+            if (!obj || typeof obj !== 'object') return null;
+            if (Array.isArray(obj)) {
+                if (obj.length > 0 && (obj[0].optionName || obj[0].optionId)) return obj;
+                for (const item of obj) { const f = findOptionsArray(item); if (f) return f; }
+            } else {
+                if (obj.tourOptions && Array.isArray(obj.tourOptions)) return obj.tourOptions;
+                for (const key in obj) { const f = findOptionsArray(obj[key]); if (f) return f; }
+            }
+            return null;
+        }
+
+        async function fetchDetail(tourId, contractId = 300) {
+            const overlay = document.getElementById('detailOverlay');
+            overlay.classList.remove('hidden');
+            document.getElementById('detailContent').innerHTML =
+                `<div class="py-32 text-center"><div class="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>`;
+            try {
+                const [detailRes, optsRes] = await Promise.all([
+                    fetch('/.netlify/functions/rayna', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ endpoint: DETAIL_ENDPOINT, payload: { countryId: COUNTRY_ID, cityId: CITY_ID, tourId, contractId, travelDate: '2026/01/09' } })
+                    }),
+                    fetch('/.netlify/functions/rayna', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ endpoint: OPTIONS_ENDPOINT, payload: { tourId, contractId } })
+                    })
+                ]);
+                const detailResult = await detailRes.json();
+                const optsResult = await optsRes.json();
+                let detail = detailResult.data || detailResult.result;
+                const tourDetail = Array.isArray(detail) ? detail[0] : (detail || detailResult);
+                renderDetailContent(tourDetail, findOptionsArray(optsResult) || []);
+            } catch {
+                document.getElementById('detailContent').innerHTML =
+                    `<div class="p-10 text-center text-red-500 font-bold">Error loading details. Please try again.</div>`;
+            }
+        }
+
+        function renderDetailContent(d, options) {
+            const content = document.getElementById('detailContent');
+            activeGalleryImages = d.tourImages?.length > 0 ? d.tourImages : [{ imagePath: d.imagePath || d.thumbImage }];
+            currentSlideIndex = 0;
+            const optArr = Array.isArray(options) ? options : [];
+            const optHtml = optArr.length > 0
+                ? optArr.map((opt, i) => `
+                    <div class="flex items-center gap-4 py-4 ${i < optArr.length - 1 ? 'border-b border-slate-100' : ''}">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-700 font-bold text-sm">${i + 1}</div>
+                        <div>
+                            <p class="text-lg font-bold text-slate-800">${opt.optionName || 'Experience Option'}</p>
+                            <p class="text-xs text-slate-400">${opt.optionDescription ? opt.optionDescription.substring(0, 60) + '...' : 'Available daily'}</p>
+                        </div>
+                    </div>`).join('')
+                : '<p class="text-slate-400 italic py-6 text-center">No specific options listed for this tour.</p>';
+
+            content.innerHTML = `
+                <div class="flex flex-col">
+                    <div class="relative slider-container">
+                        <div class="slider-track" id="sliderTrack">
+                            ${activeGalleryImages.map((img, idx) => `
+                                <div class="slide" onclick="openLightbox(${idx})">
+                                    <img src="${getFormattedImageUrl(img)}" />
+                                </div>`).join('')}
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent pointer-events-none"></div>
+                        ${activeGalleryImages.length > 1 ? `
+                        <div class="absolute inset-0 flex items-center justify-between px-10 pointer-events-none">
+                            <button onclick="moveSlide(-1)" class="pointer-events-auto bg-white/20 hover:bg-white/40 text-white p-4 rounded-full backdrop-blur-md transition-all">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                            <button onclick="moveSlide(1)" class="pointer-events-auto bg-white/20 hover:bg-white/40 text-white p-4 rounded-full backdrop-blur-md transition-all">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>` : ''}
+                        <div class="absolute bottom-12 left-12 right-12 pointer-events-none">
+                            <div class="flex gap-3 mb-6">${formatTourType(d.cityTourType)}</div>
+                            <h2 class="text-6xl font-extrabold text-white mb-4 leading-[1.1]">${d.tourName}</h2>
+                            <div class="flex items-center gap-6 text-slate-200 text-lg font-medium">
+                                <span>📍 ${d.cityName}</span>
+                                <span>🕒 ${d.duration}</span>
+                                <span class="text-yellow-400">★ ${d.rating || '5.0'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-14 grid grid-cols-1 lg:grid-cols-3 gap-16">
+                        <div class="lg:col-span-2 space-y-14">
+                            <section class="bg-white rounded-[32px] p-10 border border-slate-200 shadow-sm">
+                                <h3 class="text-2xl font-extrabold text-slate-900 mb-6 flex items-center gap-3">
+                                    Tour Options
+                                    <span class="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">${optArr.length}</span>
+                                </h3>
+                                <div class="space-y-1">${optHtml}</div>
+                            </section>
+                            <section>
+                                <h3 class="text-2xl font-extrabold text-slate-900 mb-8 border-l-4 border-blue-600 pl-4">Overview</h3>
+                                <div class="text-slate-600 leading-relaxed space-y-6 content-rich text-xl">${d.tourDescription || 'Experience details coming soon.'}</div>
+                            </section>
+                            <section class="bg-blue-50/70 rounded-[32px] p-10 border border-blue-100">
+                                <h3 class="text-2xl font-extrabold text-blue-950 mb-8">What's Included</h3>
+                                <div class="text-blue-900 content-rich text-lg">${d.tourInclusion || d.tourInclusions || 'Package features standard inclusions.'}</div>
+                            </section>
+                        </div>
+                        <div>
+                            <div class="bg-slate-50 rounded-[32px] p-10 border border-slate-200 sticky top-12">
+                                <div class="data-label mb-6">Experience Stats</div>
+                                <div class="space-y-6">
+                                    <div class="flex justify-between items-center py-3 border-b border-slate-200">
+                                        <span class="text-slate-500 font-medium">Booking Support</span>
+                                        <span class="font-bold text-slate-900">24/7 Live</span>
+                                    </div>
+                                    <div class="flex justify-between items-center py-3 border-b border-slate-200">
+                                        <span class="text-slate-500 font-medium">Primary Language</span>
+                                        <span class="font-bold text-slate-900">${d.tourLanguage || 'English'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function renderCatalog(items) {
+            const grid = document.getElementById('catalogGrid');
+            const empty = document.getElementById('emptyState');
+            if (!items.length) { grid.classList.add('hidden'); empty.classList.remove('hidden'); return; }
+            empty.classList.add('hidden');
+            grid.classList.remove('hidden');
+            grid.innerHTML = items.map(item => `
+                <div class="info-card group" onclick="fetchDetail(${item.tourId}, ${item.contractId || 300})">
+                    <div class="card-image-container">
+                        <img src="${getFormattedImageUrl(item)}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div class="absolute top-5 left-5">${formatTourType(item.cityTourType)}</div>
+                    </div>
+                    <div class="p-8 flex flex-col flex-grow">
+                        <div class="flex-grow">
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="text-yellow-500 text-xs">★★★★★</span>
+                                <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">${item.rating || '5.0'} / 5.0</span>
+                            </div>
+                            <h2 class="text-2xl font-extrabold text-slate-900 mb-4 leading-tight group-hover:text-blue-600 transition-colors">${item.tourName}</h2>
+                            <div class="flex items-center gap-3 text-slate-500 font-semibold text-sm">
+                                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                                ${item.duration}
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-8 border-t border-slate-100 mt-8">
+                            <span class="text-slate-900 font-extrabold text-sm uppercase tracking-wider">Details</span>
+                            <div class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center transition-all group-hover:bg-blue-600 group-hover:translate-x-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>`).join('');
+        }
+
+        function closeDetail() { document.getElementById('detailOverlay').classList.add('hidden'); }
+
+        function openLightbox(idx) {
+            currentLightboxIdx = idx;
+            updateLightboxUI();
+            document.getElementById('lightboxOverlay').classList.remove('hidden');
+        }
+
+        function closeLightbox() { document.getElementById('lightboxOverlay').classList.add('hidden'); }
+
+        function moveLightbox(dir) {
+            currentLightboxIdx = (currentLightboxIdx + dir + activeGalleryImages.length) % activeGalleryImages.length;
+            updateLightboxUI();
+        }
+
+        function updateLightboxUI() {
+            const img = document.getElementById('lightboxImage');
+            const counter = document.getElementById('lightboxCounter');
+            img.style.opacity = '0';
+            setTimeout(() => {
+                img.src = getFormattedImageUrl(activeGalleryImages[currentLightboxIdx]);
+                img.style.opacity = '1';
+                counter.innerText = `${currentLightboxIdx + 1} / ${activeGalleryImages.length}`;
+            }, 150);
+        }
+
+        function moveSlide(dir) {
+            const track = document.getElementById('sliderTrack');
+            const max = track.querySelectorAll('.slide').length;
+            if (max <= 1) return;
+            currentSlideIndex = (currentSlideIndex + dir + max) % max;
+            track.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+        }
+
+        function setupSearch() {
+            document.getElementById('searchInput').addEventListener('input', e => {
+                const term = e.target.value.toLowerCase();
+                renderCatalog(catalogData.filter(p =>
+                    (p.tourName || '').toLowerCase().includes(term) &&
+                    (currentFilter === 'all' || p.cityTourType === currentFilter)
+                ));
+            });
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { closeLightbox(); closeDetail(); }
+            const lb = document.getElementById('lightboxOverlay');
+            if (!lb.classList.contains('hidden')) {
+                if (e.key === 'ArrowRight') moveLightbox(1);
+                if (e.key === 'ArrowLeft') moveLightbox(-1);
+            }
+        });
+    </script>
+</body>
+</html>

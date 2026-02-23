@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const BASE_URL = "https://sandbox.raynatours.com";
+  const BASE_URL = "https://activities.raynatours.com";
   const authToken = process.env.RAYNA_TOKEN;
 
   try {
